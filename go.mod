@@ -1,4 +1,4 @@
-module foo
+module github.com/zmnpl/goidgames
 
 go 1.16
 
