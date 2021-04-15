@@ -148,6 +148,20 @@ func Search(query, searchType, sort, sortOrder string) (idgames []Idgame, err er
 	return
 }
 
+func SearchMultipleTypes(query string, searchTypes []string, sort string, sortOrder string) (idgames []Idgame, err error) {
+	idgames = make([]Idgame, 0)
+	for _, t := range searchTypes {
+		tmp, _ := Search(query, t, sort, sortOrder)
+		if len(tmp) > 0 {
+			idgames = append(idgames, tmp...)
+		}
+	}
+	// TODO Activate this sort with GO 1.8
+	// sort.Slice(idgames, func(i, j int) bool { return idgames[i].Rating < idgames[j].Rating })
+
+	return
+}
+
 // LatestFiles returns a slice of the latest additions to idgames. Limit the number or start from a specific Id. Pass 0 as startid if you want to see the hottest and newest files. If the limit is higher then the APIs max, then this is silently ignored.
 func LatestFiles(limit, startid int) (idgames []Idgame, err error) {
 	u, _ := url.Parse(API_URL)
