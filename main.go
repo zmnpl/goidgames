@@ -80,6 +80,9 @@ type Review struct {
 // DownloadTo tries to download the game to given path and returns the full path of the downloaded file
 func (g Idgame) DownloadTo(path string) (filePath string, err error) {
 	success := false
+	if err = os.MkdirAll(path, 0755); err != nil {
+		return "", err
+	}
 	for _, mirror := range Mirrors {
 		resp, err := http.Get(fmt.Sprintf("%s/%s/%s", mirror, g.Dir, g.Filename))
 		if err != nil {
