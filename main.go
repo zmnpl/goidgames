@@ -3,9 +3,12 @@ package goidgames
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 
 	"github.com/tidwall/gjson"
 )
@@ -38,6 +41,10 @@ const (
 	SEARCH_SORT_DESC = "desc"
 )
 
+var (
+	Mirrors = []string{"https://www.quaddicted.com/files/idgames", "https://ftpmirror1.infania.net/pub/idgames"}
+)
+
 // Idgame represents the metadata returned by the idgames api.
 type Idgame struct {
 	Id          int      `json:"id"`          // The file's id.
@@ -68,6 +75,34 @@ type Review struct {
 	Text     string `json:"text"`     // The individual review's text, if any. Note: may be blank.
 	Vote     int    `json:"vote"`     // The vote associated with the review.
 	Username string `json:"username"` // The user name associated with the review, if any. Note: may be blank/null, which means "Anonymous". Since Version 3
+}
+
+// DownloadTo tries to download the game to given path and returns the full path of the downloaded file
+func (g Idgame) DownloadTo(path string) (filePath string, err error) {
+	success := false
+	for _, mirror := range Mirrors {
+		resp, err := http.Get(fmt.Sprintf("%s/%s/%s", mirror, g.Dir, g.Filename))
+		if err != nil {
+			continue
+		}
+		defer resp.Body.Close()
+
+		out, err := os.Create(filepath.Join(path, g.Filename))
+		if err != nil {
+			continue
+		}
+		defer out.Close()
+
+		_, err = io.Copy(out, resp.Body)
+		if err == nil {
+			success = true
+			break
+		}
+	}
+	if !success {
+		return "", fmt.Errorf("%s", "Unable to download.")
+	}
+	return filePath, nil
 }
 
 // Get gets the data for a game specified by id or filepath.
