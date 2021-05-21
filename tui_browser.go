@@ -40,6 +40,7 @@ func NewIdgamesBrowser(app *tview.Application) *IdgamesBrowser {
 
 	canvas := tview.NewPages()
 	canvas.AddPage(pageMain, layout, true, true)
+	browser.canvas = canvas
 
 	browser.initList()
 	browser.initDetails()
@@ -146,7 +147,7 @@ func (b *IdgamesBrowser) initList() {
 			if b.confirmCallback != nil {
 				b.confirmCallback(b.idgames[r-1])
 			}
-			b.idgames[r-1].DownloadTo(b.downloadPath)
+			fmt.Println(b.idgames[r-1].DownloadTo(b.downloadPath))
 		}
 	})
 
