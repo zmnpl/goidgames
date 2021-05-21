@@ -8,9 +8,15 @@ import (
 	"github.com/rivo/tview"
 )
 
+const (
+	pageMain   = "main"
+	pageDLSure = "dlsure"
+)
+
 // IdgamesBrowser holds all fields of the module
 type IdgamesBrowser struct {
 	app          *tview.Application
+	canvas       *tview.Pages
 	layout       *tview.Grid
 	list         *tview.Table
 	fileDetails  *tview.TextView
@@ -28,10 +34,12 @@ func NewIdgamesBrowser(app *tview.Application) *IdgamesBrowser {
 	browser := &IdgamesBrowser{app: app}
 
 	layout := tview.NewGrid()
+	browser.layout = layout
 	layout.SetRows(5, -1, 5)
 	layout.SetColumns(-1, -1)
 
-	browser.layout = layout
+	canvas := tview.NewPages()
+	canvas.AddPage(pageMain, layout, true, true)
 
 	browser.initList()
 	browser.initDetails()
@@ -49,6 +57,11 @@ func (b *IdgamesBrowser) SetConfirmCallback(f func(idgame Idgame)) {
 // SetDownloadPath sets the path where the browser can download game files to
 func (b *IdgamesBrowser) SetDownloadPath(path string) {
 	b.downloadPath = path
+}
+
+// GetRootLayout returns the root layout
+func (b *IdgamesBrowser) GetRootLayout() *tview.Pages {
+	return b.canvas
 }
 
 // init search form ui component
