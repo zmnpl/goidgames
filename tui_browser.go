@@ -10,15 +10,16 @@ import (
 
 // IdgamesBrowser holds all fields of the module
 type IdgamesBrowser struct {
-	app         *tview.Application
-	layout      *tview.Grid
-	list        *tview.Table
-	fileDetails *tview.TextView
-	reviews     *tview.TextView
-	search      *tview.InputField
-	idgames     []Idgame
+	app          *tview.Application
+	layout       *tview.Grid
+	list         *tview.Table
+	fileDetails  *tview.TextView
+	reviews      *tview.TextView
+	search       *tview.InputField
+	idgames      []Idgame
+	downloadPath string
 
-	enterCallback func(idgamesurul string)
+	confirmCallback func(idgame Idgame)
 }
 
 // NewIdgamesBrowser is the modules constructor
@@ -39,10 +40,15 @@ func NewIdgamesBrowser(app *tview.Application) *IdgamesBrowser {
 	return browser
 }
 
-// SetEnterCallback sets a callback function that receives the idgames url of a row on which "ENTER" is pressed by the user
+// SetConfirmCallback sets a callback function that receives the idgames url of a row on which "ENTER" is pressed by the user
 // This callbak function could, for example, launch a download of given file
-func (b *IdgamesBrowser) SetEnterCallback(f func(idgamesurl string)) {
-	b.enterCallback = f
+func (b *IdgamesBrowser) SetConfirmCallback(f func(idgame Idgame)) {
+	b.confirmCallback = f
+}
+
+// SetDownloadPath sets the path where the browser can download game files to
+func (b *IdgamesBrowser) SetDownloadPath(path string) {
+	b.downloadPath = path
 }
 
 // init search form ui component
@@ -124,9 +130,10 @@ func (b *IdgamesBrowser) initList() {
 	list.SetSelectedFunc(func(r int, c int) {
 		switch {
 		case r > 0:
-			if b.enterCallback != nil {
-				b.enterCallback(b.idgames[r-1].Idgamesurl)
+			if b.confirmCallback != nil {
+				b.confirmCallback(b.idgames[r-1])
 			}
+			b.idgames[r-1].DownloadTo(b.downloadPath)
 		}
 	})
 
@@ -145,52 +152,52 @@ func updateGameDetails(idgames []Idgame) {
 }
 
 // UpdateSearch triggers an API call with given search query and types and populates the UI with the results
-func (b *IdgamesBrowser) UpdateSearch(query string, types []string) {
+func (browser *IdgamesBrowser) UpdateSearch(query string, types []string) {
 	go func() {
-		b.app.QueueUpdateDraw(func() {
+		browser.app.QueueUpdateDraw(func() {
 			idgames, _ := SearchMultipleTypes(query, types, SEARCH_SORT_RATING, SEARCH_SORT_DESC)
 
 			go func() {
 				updateGameDetails(idgames)
 			}()
 
-			b.populateList(idgames)
+			browser.populateList(idgames)
 		})
 	}()
 }
 
 // UpdateLatest triggers an API call for the latest entries and populates the UI with the results
-func (b *IdgamesBrowser) UpdateLatest() {
+func (browser *IdgamesBrowser) UpdateLatest() {
 	go func() {
-		b.app.QueueUpdateDraw(func() {
+		browser.app.QueueUpdateDraw(func() {
 			idgames, _ := LatestFiles(50, 0)
 
 			go func() {
 				updateGameDetails(idgames)
 			}()
 
-			b.populateList(idgames)
+			browser.populateList(idgames)
 		})
 	}()
 }
 
-// populate the UIs list
-func (b *IdgamesBrowser) populateList(idgames []Idgame) {
-	b.list.Clear()
-	b.idgames = idgames
+// populateList populates the UIs list
+func (browser *IdgamesBrowser) populateList(idgames []Idgame) {
+	browser.list.Clear()
+	browser.idgames = idgames
 
 	// header
-	b.list.SetCell(0, 0, tview.NewTableCell("Rating").SetTextColor(tview.Styles.SecondaryTextColor))
-	b.list.SetCell(0, 1, tview.NewTableCell("Title").SetTextColor(tview.Styles.SecondaryTextColor))
-	b.list.SetCell(0, 2, tview.NewTableCell("Author").SetTextColor(tview.Styles.SecondaryTextColor))
-	b.list.SetCell(0, 3, tview.NewTableCell("Date").SetTextColor(tview.Styles.SecondaryTextColor))
+	browser.list.SetCell(0, 0, tview.NewTableCell("Rating").SetTextColor(tview.Styles.SecondaryTextColor))
+	browser.list.SetCell(0, 1, tview.NewTableCell("Title").SetTextColor(tview.Styles.SecondaryTextColor))
+	browser.list.SetCell(0, 2, tview.NewTableCell("Author").SetTextColor(tview.Styles.SecondaryTextColor))
+	browser.list.SetCell(0, 3, tview.NewTableCell("Date").SetTextColor(tview.Styles.SecondaryTextColor))
 
-	b.list.SetSelectionChangedFunc(func(r int, c int) {
+	browser.list.SetSelectionChangedFunc(func(r int, c int) {
 		switch r {
 		case 0:
 			return
 		default:
-			b.populateDetails(idgames[r-1])
+			browser.populateDetails(idgames[r-1])
 		}
 	})
 
@@ -218,16 +225,16 @@ func (b *IdgamesBrowser) populateList(idgames []Idgame) {
 				cell = tview.NewTableCell("").SetTextColor(tview.Styles.PrimaryTextColor)
 			}
 
-			b.list.SetCell(r, c, cell)
+			browser.list.SetCell(r, c, cell)
 		}
 	}
-	b.list.ScrollToBeginning()
+	browser.list.ScrollToBeginning()
 }
 
 // populate the detail pane
-func (b *IdgamesBrowser) populateDetails(idgame Idgame) {
-	b.fileDetails.Clear()
-	fmt.Fprintf(b.fileDetails, "%s", idgame.Textfile)
+func (browser *IdgamesBrowser) populateDetails(idgame Idgame) {
+	browser.fileDetails.Clear()
+	fmt.Fprintf(browser.fileDetails, "%s", idgame.Textfile)
 }
 
 // helper to make a string from the games rating
