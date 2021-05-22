@@ -329,5 +329,5 @@ func sureDownloadBox(title string, onOk func(), onCancel func(), xOffset int, yO
 
 func hexStringFromColor(c tcell.Color) string {
 	r, g, b := c.RGB()
-	return fmt.Sprintf("[#%x%x%x]", r, g, b)
+	return fmt.Sprintf("[#%02x%02x%02x]", r, g, b)
 }
