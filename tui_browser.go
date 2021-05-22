@@ -15,15 +15,16 @@ const (
 
 // IdgamesBrowser holds all fields of the module
 type IdgamesBrowser struct {
-	app          *tview.Application
-	canvas       *tview.Pages
-	layout       *tview.Grid
-	list         *tview.Table
-	fileDetails  *tview.TextView
-	reviews      *tview.TextView
-	search       *tview.InputField
-	idgames      []Idgame
-	downloadPath string
+	app           *tview.Application
+	canvas        *tview.Pages
+	layout        *tview.Grid
+	list          *tview.Table
+	fileDetails   *tview.TextView
+	reviews       *tview.TextView
+	dlPathPreview *tview.TextView
+	search        *tview.InputField
+	idgames       []Idgame
+	downloadPath  string
 
 	confirmCallback func(idgame Idgame)
 }
@@ -35,7 +36,7 @@ func NewIdgamesBrowser(app *tview.Application) *IdgamesBrowser {
 
 	layout := tview.NewGrid()
 	browser.layout = layout
-	layout.SetRows(5, -1, 5)
+	layout.SetRows(5, -1, 3)
 	layout.SetColumns(-1, -1)
 
 	canvas := tview.NewPages()
@@ -45,6 +46,7 @@ func NewIdgamesBrowser(app *tview.Application) *IdgamesBrowser {
 	browser.initList()
 	browser.initDetails()
 	browser.initSearchForm()
+	browser.initDlPathPreview()
 
 	return browser
 }
@@ -58,6 +60,7 @@ func (b *IdgamesBrowser) SetConfirmCallback(f func(idgame Idgame)) {
 // SetDownloadPath sets the path where the browser can download game files to
 func (b *IdgamesBrowser) SetDownloadPath(path string) {
 	b.downloadPath = path
+	b.populatedlPathPreview()
 }
 
 // GetRootLayout returns the root layout
@@ -116,6 +119,17 @@ func (b *IdgamesBrowser) initDetails() {
 	})
 
 	b.fileDetails = details
+}
+
+func (b *IdgamesBrowser) initDlPathPreview() {
+	dlPathPreview := tview.NewTextView().
+		SetDynamicColors(true).
+		SetRegions(true)
+	dlPathPreview.SetBorder(true).
+		SetBorderPadding(0, 0, 1, 1)
+	b.layout.AddItem(dlPathPreview, 2, 0, 1, 2, 0, 0, false)
+
+	b.dlPathPreview = dlPathPreview
 }
 
 // init list ui component
@@ -267,6 +281,12 @@ func (browser *IdgamesBrowser) populateDetails(idgame Idgame) {
 	fmt.Fprintf(browser.fileDetails, "%s", idgame.Textfile)
 }
 
+// populate the detail panelayout
+func (browser *IdgamesBrowser) populatedlPathPreview() {
+	browser.dlPathPreview.Clear()
+	fmt.Fprintf(browser.dlPathPreview, "%sDownload to: %s", hexStringFromColor(tview.Styles.MoreContrastBackgroundColor), browser.downloadPath)
+}
+
 // helper to make a string from the games rating
 func ratingString(rating float32) string {
 	return strings.Repeat("*", int(rating)) + strings.Repeat("-", 5-int(rating))
@@ -305,4 +325,9 @@ func sureDownloadBox(title string, onOk func(), onCancel func(), xOffset int, yO
 		AddItem(nil, 0, 1, false)
 
 	return youSureLayout
+}
+
+func hexStringFromColor(c tcell.Color) string {
+	r, g, b := c.RGB()
+	return fmt.Sprintf("[#%x%x%x]", r, g, b)
 }
