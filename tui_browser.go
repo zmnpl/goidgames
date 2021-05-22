@@ -284,7 +284,7 @@ func (browser *IdgamesBrowser) populateDetails(idgame Idgame) {
 // populate the detail panelayout
 func (browser *IdgamesBrowser) populatedlPathPreview() {
 	browser.dlPathPreview.Clear()
-	fmt.Fprintf(browser.dlPathPreview, "%sDownload to: %s", hexStringFromColor(tview.Styles.MoreContrastBackgroundColor), browser.downloadPath)
+	fmt.Fprintf(browser.dlPathPreview, "%sDownload to:%s, %s", hexStringFromColor(tview.Styles.MoreContrastBackgroundColor), hexStringFromColor(tview.Styles.PrimaryTextColor), browser.downloadPath)
 }
 
 // helper to make a string from the games rating
