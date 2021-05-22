@@ -144,10 +144,26 @@ func (b *IdgamesBrowser) initList() {
 	list.SetSelectedFunc(func(r int, c int) {
 		switch {
 		case r > 0:
+			g := b.idgames[r-1]
 			if b.confirmCallback != nil {
-				b.confirmCallback(b.idgames[r-1])
+				b.confirmCallback(g)
 			}
-			fmt.Println(b.idgames[r-1].DownloadTo(b.downloadPath))
+
+			b.canvas.AddPage(pageDLSure, sureDownloadBox(fmt.Sprintf("Download %v?", g.Title),
+				func() {
+					g.DownloadTo(b.downloadPath)
+					b.canvas.RemovePage(pageDLSure)
+					b.app.SetFocus(b.list)
+				},
+				func() {
+					b.canvas.RemovePage(pageDLSure)
+					b.app.SetFocus(b.list)
+				},
+				8,
+				r+1,
+				b.list.Box),
+				true, true)
+			fmt.Println()
 		}
 	})
 
@@ -245,7 +261,7 @@ func (browser *IdgamesBrowser) populateList(idgames []Idgame) {
 	browser.list.ScrollToBeginning()
 }
 
-// populate the detail pane
+// populate the detail panelayout
 func (browser *IdgamesBrowser) populateDetails(idgame Idgame) {
 	browser.fileDetails.Clear()
 	fmt.Fprintf(browser.fileDetails, "%s", idgame.Textfile)
@@ -254,4 +270,39 @@ func (browser *IdgamesBrowser) populateDetails(idgame Idgame) {
 // helper to make a string from the games rating
 func ratingString(rating float32) string {
 	return strings.Repeat("*", int(rating)) + strings.Repeat("-", 5-int(rating))
+}
+
+// help for navigation
+func sureDownloadBox(title string, onOk func(), onCancel func(), xOffset int, yOffset int, container *tview.Box) *tview.Flex {
+	youSureForm := tview.NewForm().
+		AddButton("Download", onOk).
+		AddButton("Cancel", onCancel)
+	youSureForm.
+		SetBorder(true).
+		SetTitle(title)
+	youSureForm.SetFocus(1)
+
+	height := 5
+	width := 75
+
+	// surrounding layout
+	_, _, _, containerHeight := container.GetRect()
+	helpHeight := 5
+
+	// default: right below the selected game
+	// though, if it flows out of the screen, then on top of the game
+	if yOffset+height > containerHeight+helpHeight {
+		yOffset = yOffset - height - 1
+	}
+
+	youSureLayout := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(nil, yOffset, 0, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(nil, xOffset, 0, false).
+			AddItem(youSureForm, width, 0, true).
+			AddItem(nil, 0, 1, false),
+			height, 1, true).
+		AddItem(nil, 0, 1, false)
+
+	return youSureLayout
 }
