@@ -107,8 +107,12 @@ func (b *IdgamesBrowser) initDetails() {
 
 	details.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		k := event.Key()
-		if k == tcell.KeyTAB {
+		if k == tcell.KeyESC {
 			b.app.SetFocus(b.search)
+			return nil
+		}
+		if k == tcell.KeyTAB {
+			b.app.SetFocus(b.list)
 			return nil
 		}
 		if k == tcell.KeyBacktab {
@@ -144,6 +148,10 @@ func (b *IdgamesBrowser) initList() {
 
 	list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		k := event.Key()
+		if k == tcell.KeyESC {
+			b.app.SetFocus(b.search)
+			return nil
+		}
 		if k == tcell.KeyTAB {
 			b.app.SetFocus(b.fileDetails)
 			return nil
@@ -294,13 +302,20 @@ func ratingString(rating float32) string {
 
 // help for navigation
 func sureDownloadBox(title string, onOk func(), onCancel func(), xOffset int, yOffset int, container *tview.Box) *tview.Flex {
-	youSureForm := tview.NewForm().
-		AddButton("Download", onOk).
-		AddButton("Cancel", onCancel)
+	okbtn := tview.NewButton("foo")
+	okbtn.SetSelectedFunc(onOk)
+	youSureForm := tview.NewForm()
 	youSureForm.
 		SetBorder(true).
 		SetTitle(title)
 	youSureForm.SetFocus(1)
+
+	youSureForm.
+		AddButton("Download", func() {
+			youSureForm.GetButton(0).SetLabel("Hold on...")
+			onOk()
+		}).
+		AddButton("Cancel", onCancel)
 
 	height := 5
 	width := 75
