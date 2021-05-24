@@ -281,7 +281,6 @@ func (browser *IdgamesBrowser) populateDetails(idgame Idgame) {
 	browser.fileDetails.Clear()
 
 	// stylize the text file a bit
-	var foo strings.Builder
 	re := regexp.MustCompile(`^(\S.*?):(.*)`)
 	for _, line := range strings.Split(idgame.Textfile, "\n") {
 		line = re.ReplaceAllString(line, fmt.Sprintf("%s$1:%s$2", hexStringFromColor(tview.Styles.MoreContrastBackgroundColor), hexStringFromColor(tview.Styles.PrimaryTextColor)))
@@ -289,11 +288,10 @@ func (browser *IdgamesBrowser) populateDetails(idgame Idgame) {
 			hexStringFromColor(tview.Styles.MoreContrastBackgroundColor)+"==========================================================================="+hexStringFromColor(tview.Styles.PrimaryTextColor),
 			1)
 
-		foo.WriteString(line)
-		foo.WriteString("\n")
+		fmt.Fprintf(browser.fileDetails, "%s\n", line)
 	}
 
-	fmt.Fprintf(browser.fileDetails, "%s", foo.String())
+	browser.fileDetails.ScrollToBeginning()
 }
 
 // populate the detail panelayout

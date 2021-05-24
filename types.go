@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Idgame represents the metadata returned by the idgames api.
@@ -40,12 +41,29 @@ type Review struct {
 	Username string `json:"username"` // The user name associated with the review, if any. Note: may be blank/null, which means "Anonymous". Since Version 3
 }
 
+type WriteCounter struct {
+	Total uint64
+}
+
+func (wc *WriteCounter) Write(p []byte) (int, error) {
+	n := len(p)
+	wc.Total += uint64(n)
+	wc.PrintProgress()
+	return n, nil
+}
+
+func (wc WriteCounter) PrintProgress() {
+	fmt.Printf("\r%s", strings.Repeat(" ", 35))
+	fmt.Printf("\rDownloading... %v complete", wc.Total)
+}
+
 // DownloadTo tries to download the game to given path and returns the full path of the downloaded file
 func (g Idgame) DownloadTo(path string) (filePath string, err error) {
 	success := false
 	if err = os.MkdirAll(path, 0755); err != nil {
 		return "", err
 	}
+	// try for all mirrors
 	for _, mirror := range Mirrors {
 		resp, err := http.Get(fmt.Sprintf("%s/%s/%s", mirror, g.Dir, g.Filename))
 		if err != nil {
@@ -59,7 +77,8 @@ func (g Idgame) DownloadTo(path string) (filePath string, err error) {
 		}
 		defer out.Close()
 
-		_, err = io.Copy(out, resp.Body)
+		counter := &WriteCounter{}
+		_, err = io.Copy(out, io.TeeReader(resp.Body, counter))
 		if err == nil {
 			success = true
 			break
