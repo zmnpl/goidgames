@@ -2,6 +2,7 @@ package goidgames
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -107,16 +108,12 @@ func (b *IdgamesBrowser) initDetails() {
 
 	details.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		k := event.Key()
-		if k == tcell.KeyESC {
-			b.app.SetFocus(b.search)
-			return nil
-		}
 		if k == tcell.KeyTAB {
 			b.app.SetFocus(b.list)
 			return nil
 		}
 		if k == tcell.KeyBacktab {
-			b.app.SetFocus(b.list)
+			b.app.SetFocus(b.search)
 			return nil
 		}
 		return event
@@ -148,10 +145,6 @@ func (b *IdgamesBrowser) initList() {
 
 	list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		k := event.Key()
-		if k == tcell.KeyESC {
-			b.app.SetFocus(b.search)
-			return nil
-		}
 		if k == tcell.KeyTAB {
 			b.app.SetFocus(b.fileDetails)
 			return nil
@@ -286,7 +279,21 @@ func (browser *IdgamesBrowser) populateList(idgames []Idgame) {
 // populate the detail panelayout
 func (browser *IdgamesBrowser) populateDetails(idgame Idgame) {
 	browser.fileDetails.Clear()
-	fmt.Fprintf(browser.fileDetails, "%s", idgame.Textfile)
+
+	// stylize the text file a bit
+	var foo strings.Builder
+	re := regexp.MustCompile(`^(\S.*?):(.*)`)
+	for _, line := range strings.Split(idgame.Textfile, "\n") {
+		line = re.ReplaceAllString(line, fmt.Sprintf("%s$1:%s$2", hexStringFromColor(tview.Styles.MoreContrastBackgroundColor), hexStringFromColor(tview.Styles.PrimaryTextColor)))
+		line = strings.Replace(line, "===========================================================================",
+			hexStringFromColor(tview.Styles.MoreContrastBackgroundColor)+"==========================================================================="+hexStringFromColor(tview.Styles.PrimaryTextColor),
+			1)
+
+		foo.WriteString(line)
+		foo.WriteString("\n")
+	}
+
+	fmt.Fprintf(browser.fileDetails, "%s", foo.String())
 }
 
 // populate the detail panelayout
