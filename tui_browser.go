@@ -170,7 +170,6 @@ func (b *IdgamesBrowser) initList() {
 			// custom callback when enter is hit on a selection
 			if b.confirmCallback != nil {
 				b.confirmCallback(g)
-				b.app.SetFocus(b.list)
 			} else {
 				// if there is no custom callback, a download is initiated
 				b.canvas.AddPage(pageDLSure, sureDownloadBox(fmt.Sprintf("Download %v?", g.Title),
