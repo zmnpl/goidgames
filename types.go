@@ -53,6 +53,7 @@ func (wc *WriteCounter) Write(p []byte) (int, error) {
 }
 
 func (wc WriteCounter) PrintProgress() {
+	// TODO: PrintProgress could create a proper tui-component to show progress instead of just printing (though, printing seems ok for now)
 	fmt.Printf("\r%s", strings.Repeat(" ", 35))
 	fmt.Printf("\rDownloading... %v complete", wc.Total)
 }
