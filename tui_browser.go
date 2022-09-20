@@ -27,7 +27,8 @@ type IdgamesBrowser struct {
 	idgames       []Idgame
 	downloadPath  string
 
-	confirmCallback func(idgame Idgame)
+	confirmCallback      func(idgame Idgame)
+	postDownloadCallback func(archivePath string)
 }
 
 // NewIdgamesBrowser is the modules constructor
@@ -52,7 +53,7 @@ func NewIdgamesBrowser(app *tview.Application) *IdgamesBrowser {
 	return browser
 }
 
-// SetConfirmCallback sets a callback function that receives the idgames url of a row on which "ENTER" is pressed by the user
+// SetConfirmCallback sets a callback function that receives the Idgame instance of a row on which "ENTER" is pressed by the user
 // This callbak function could, for example, launch a download of given file
 func (b *IdgamesBrowser) SetConfirmCallback(f func(idgame Idgame)) {
 	b.confirmCallback = f
@@ -62,6 +63,12 @@ func (b *IdgamesBrowser) SetConfirmCallback(f func(idgame Idgame)) {
 func (b *IdgamesBrowser) SetDownloadPath(path string) {
 	b.downloadPath = path
 	b.populatedlPathPreview()
+}
+
+// SetDownloadDoneCallback set a callback function which gets exectuted when the download has been finished
+// the callback receives the local file path of the downloaded archive
+func (b *IdgamesBrowser) SetPostDownloadCallback(doWhenDownloadDone func(archivePath string)) {
+	b.postDownloadCallback = doWhenDownloadDone
 }
 
 // GetRootLayout returns the root layout
@@ -157,28 +164,30 @@ func (b *IdgamesBrowser) initList() {
 	})
 
 	list.SetSelectedFunc(func(r int, c int) {
-		switch {
-		case r > 0:
+		if r > 0 {
 			g := b.idgames[r-1]
+
+			// custom callback when enter is hit on a selection
 			if b.confirmCallback != nil {
 				b.confirmCallback(g)
+				b.app.SetFocus(b.list)
+			} else {
+				// if there is no custom callback, a download is initiated
+				b.canvas.AddPage(pageDLSure, sureDownloadBox(fmt.Sprintf("Download %v?", g.Title),
+					func() {
+						g.DownloadTo(b.downloadPath)
+						b.canvas.RemovePage(pageDLSure)
+						b.app.SetFocus(b.list)
+					},
+					func() {
+						b.canvas.RemovePage(pageDLSure)
+						b.app.SetFocus(b.list)
+					},
+					8,
+					r+1,
+					b.list.Box),
+					true, true)
 			}
-
-			b.canvas.AddPage(pageDLSure, sureDownloadBox(fmt.Sprintf("Download %v?", g.Title),
-				func() {
-					g.DownloadTo(b.downloadPath)
-					b.canvas.RemovePage(pageDLSure)
-					b.app.SetFocus(b.list)
-				},
-				func() {
-					b.canvas.RemovePage(pageDLSure)
-					b.app.SetFocus(b.list)
-				},
-				8,
-				r+1,
-				b.list.Box),
-				true, true)
-			fmt.Println()
 		}
 	})
 

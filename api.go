@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"sort"
 
 	"github.com/tidwall/gjson"
 )
@@ -120,16 +121,16 @@ func Search(query, searchType, sort, sortOrder string) (idgames []Idgame, err er
 	return
 }
 
-func SearchMultipleTypes(query string, searchTypes []string, sort string, sortOrder string) (idgames []Idgame, err error) {
+func SearchMultipleTypes(query string, searchTypes []string, sorting string, sortOrder string) (idgames []Idgame, err error) {
 	idgames = make([]Idgame, 0)
 	for _, t := range searchTypes {
-		tmp, _ := Search(query, t, sort, sortOrder)
+		tmp, _ := Search(query, t, sorting, sortOrder)
 		if len(tmp) > 0 {
 			idgames = append(idgames, tmp...)
 		}
 	}
 	// TODO Activate this sort with GO 1.8
-	// sort.Slice(idgames, func(i, j int) bool { return idgames[i].Rating < idgames[j].Rating })
+	sort.Slice(idgames, func(i, j int) bool { return idgames[i].Rating > idgames[j].Rating })
 
 	return
 }
