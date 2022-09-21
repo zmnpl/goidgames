@@ -82,6 +82,16 @@ func (b *IdgamesBrowser) GetSelectedRowNumber() int {
 	return r
 }
 
+// FocusSearch focuses the search input field
+func (b *IdgamesBrowser) FocusSearch() {
+	b.app.SetFocus(b.search)
+}
+
+// FocusList focuses the result list
+func (b *IdgamesBrowser) FocusList() {
+	b.app.SetFocus(b.list)
+}
+
 // UpdateSearch triggers an API call with given search query and types and populates the UI with the results
 func (browser *IdgamesBrowser) UpdateSearch(query string, types []string) {
 	go func() {
