@@ -64,6 +64,8 @@ func (g Idgame) DownloadTo(path string) (filePath string, err error) {
 	if err = os.MkdirAll(path, 0755); err != nil {
 		return "", err
 	}
+
+	filePath = filepath.Join(path, g.Filename)
 	// try for all mirrors
 	for _, mirror := range Mirrors {
 		resp, err := http.Get(fmt.Sprintf("%s/%s/%s", mirror, g.Dir, g.Filename))
@@ -72,7 +74,7 @@ func (g Idgame) DownloadTo(path string) (filePath string, err error) {
 		}
 		defer resp.Body.Close()
 
-		out, err := os.Create(filepath.Join(path, g.Filename))
+		out, err := os.Create(filePath)
 		if err != nil {
 			continue
 		}

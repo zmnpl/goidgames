@@ -76,6 +76,42 @@ func (b *IdgamesBrowser) GetRootLayout() *tview.Pages {
 	return b.canvas
 }
 
+// GetRootLayout returns the root layout
+func (b *IdgamesBrowser) GetSelectedRowNumber() int {
+	r, _ := b.list.GetSelection()
+	return r
+}
+
+// UpdateSearch triggers an API call with given search query and types and populates the UI with the results
+func (browser *IdgamesBrowser) UpdateSearch(query string, types []string) {
+	go func() {
+		browser.app.QueueUpdateDraw(func() {
+			idgames, _ := SearchMultipleTypes(query, types, SEARCH_SORT_RATING, SEARCH_SORT_DESC)
+
+			go func() {
+				updateGameDetails(idgames)
+			}()
+
+			browser.populateList(idgames)
+		})
+	}()
+}
+
+// UpdateLatest triggers an API call for the latest entries and populates the UI with the results
+func (browser *IdgamesBrowser) UpdateLatest() {
+	go func() {
+		browser.app.QueueUpdateDraw(func() {
+			idgames, _ := LatestFiles(50, 0)
+
+			go func() {
+				updateGameDetails(idgames)
+			}()
+
+			browser.populateList(idgames)
+		})
+	}()
+}
+
 // init search form ui component
 func (b *IdgamesBrowser) initSearchForm() {
 	searchForm := tview.NewForm()
@@ -202,36 +238,6 @@ func updateGameDetails(idgames []Idgame) {
 		}
 		idgames[i] = g
 	}
-}
-
-// UpdateSearch triggers an API call with given search query and types and populates the UI with the results
-func (browser *IdgamesBrowser) UpdateSearch(query string, types []string) {
-	go func() {
-		browser.app.QueueUpdateDraw(func() {
-			idgames, _ := SearchMultipleTypes(query, types, SEARCH_SORT_RATING, SEARCH_SORT_DESC)
-
-			go func() {
-				updateGameDetails(idgames)
-			}()
-
-			browser.populateList(idgames)
-		})
-	}()
-}
-
-// UpdateLatest triggers an API call for the latest entries and populates the UI with the results
-func (browser *IdgamesBrowser) UpdateLatest() {
-	go func() {
-		browser.app.QueueUpdateDraw(func() {
-			idgames, _ := LatestFiles(50, 0)
-
-			go func() {
-				updateGameDetails(idgames)
-			}()
-
-			browser.populateList(idgames)
-		})
-	}()
 }
 
 // populateList populates the UIs list
